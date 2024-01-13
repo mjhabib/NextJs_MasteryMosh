@@ -7,7 +7,10 @@ export default function NavBar() {
       <Link href='/' className='mr-5'>
         NextJS
       </Link>
-      <Link href='/users'>Users</Link>
+      <Link href='/users' className='mr-5'>
+        Users
+      </Link>
+      <Link href='/products'>Products</Link>
     </div>
   );
 }

@@ -1,40 +1,67 @@
 import { NextRequest, NextResponse } from 'next/server';
 import schema from '../schema';
+import prisma from '@/root/prisma/client';
 
 interface props {
-  params: { id: number };
+  params: { id: string };
+  // the type of value we get from URL is string
 }
 
-export function GET(req: NextRequest, { params }: props) {
-  if (params.id > 10) {
+export async function GET(req: NextRequest, { params }: props) {
+  const user = await prisma.user.findUnique({
+    where: { id: parseInt(params.id) },
+    // since the 'id' here is an int, we need to convert our 'params.id' to int too.
+  });
+
+  if (!user) {
     return NextResponse.json({ error: 'The user was not found!' });
   }
-  return NextResponse.json({ id: 1, name: 'MJ' });
+  return NextResponse.json(user);
 }
-
-// since we don't have a DB yet, we hardcoded our data into the function
 
 export async function PUT(req: NextRequest, { params }: props) {
   const body = await req.json();
-  // this is how we can use Zod for validation instead of manual validation
+
   const zodValidation = schema.safeParse(body);
   if (!zodValidation.success) {
-    // if (!body.name) {
-    // return NextResponse.json({ error: 'Name is required' });
     return NextResponse.json(zodValidation.error.errors);
   }
-  if (params.id > 10) {
+
+  const user = await prisma.user.findUnique({
+    where: { id: parseInt(params.id) },
+  });
+
+  if (!user) {
     return NextResponse.json({ error: 'User was not found' });
   }
-  return NextResponse.json({ id: 1, name: body.name });
+
+  const updatedUser = await prisma.user.update({
+    where: { id: user.id },
+    data: {
+      name: body.name,
+      email: body.email,
+    },
+  });
+
+  return NextResponse.json(updatedUser);
 }
 
 export async function DELETE(req: NextRequest, { params }: props) {
   const body = await req.json();
-  if (params.id > 10) {
+
+  const user = await prisma.user.findUnique({
+    where: { id: parseInt(params.id) },
+  });
+
+  if (!user) {
     return NextResponse.json({ error: 'User was not found' });
   }
+
+  await prisma.user.delete({
+    where: { id: user.id },
+  });
+
   return NextResponse.json({ message: 'User was deleted' });
 }
 
-// we can test out the PUT, DELETE requests by PostMan.
+// we can test out the PUT, DELETE requests by PostMan/RestMan.
